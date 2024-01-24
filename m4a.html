@@ -84,7 +84,7 @@
             formData.append('audio_file', mp3Blob, 'output.mp3');
 
             try {
-                const response = await fetch('http://tx.chenmin.org:9000/asr?encode=true&task=transcribe&language=zh&initial_prompt=%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A5%E4%BC%9A%E8%AE%AE%E5%BD%95%E9%9F%B3%EF%BC%8C%E4%B8%BB%E8%A6%81%E8%AF%AD%E8%A8%80%E4%B8%BA%E6%99%AE%E9%80%9A%E8%AF%9D&word_timestamps=false&output=srt', {
+                const response = await fetch('/asr?encode=true&task=transcribe&language=zh&initial_prompt=%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A5%E4%BC%9A%E8%AE%AE%E5%BD%95%E9%9F%B3%EF%BC%8C%E4%B8%BB%E8%A6%81%E8%AF%AD%E8%A8%80%E4%B8%BA%E6%99%AE%E9%80%9A%E8%AF%9D&word_timestamps=false&output=srt', {
                     method: 'POST',
                     body: formData
                 });
