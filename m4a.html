@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>M4A 到 MP3 转换器</title>
+    <title>M4A 到 MP3 转换器及语音识别1.3</title>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
     <style>
         #progressBarContainer {
@@ -20,7 +20,7 @@
     </style>
 </head>
 <body>
-    <h1>M4A 到 MP3 转换器</h1>
+    <h1>M4A 到 MP3 转换器及语音识别</h1>
     <input type="file" id="fileUploader" accept=".m4a" />
     <button id="convertButton">转换为 MP3</button>
     <br>
@@ -29,6 +29,9 @@
     </div>
     <br>
     <a id="downloadLink" style="display: none;">下载 MP3</a>
+    <br>
+    <button id="transcribeButton" style="display: none;">语音转文字</button>
+    <p id="transcriptionResult"></p>
 
     <script>
         const { createFFmpeg, fetchFile } = FFmpeg;
@@ -44,6 +47,9 @@
         const fileUploader = document.getElementById('fileUploader');
         const convertButton = document.getElementById('convertButton');
         const downloadLink = document.getElementById('downloadLink');
+        const transcribeButton = document.getElementById('transcribeButton');
+        const transcriptionResult = document.getElementById('transcriptionResult');
+        let mp3Blob;
 
         convertButton.addEventListener('click', async () => {
             const file = fileUploader.files[0];
@@ -54,19 +60,40 @@
                 }
 
                 ffmpeg.FS('writeFile', file.name, await fetchFile(file));
-
                 await ffmpeg.run('-i', file.name, '-b:a', '192k', 'output.mp3');
-
                 const data = ffmpeg.FS('readFile', 'output.mp3');
-                const url = URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mpeg' }));
+                mp3Blob = new Blob([data.buffer], { type: 'audio/mpeg' });
 
+                const url = URL.createObjectURL(mp3Blob);
                 downloadLink.href = url;
                 downloadLink.download = 'output.mp3';
                 downloadLink.style.display = 'block';
+                transcribeButton.style.display = 'block';
 
                 convertButton.disabled = false;
             } else {
                 alert('请先上传一个 M4A 文件。');
+            }
+        });
+
+        transcribeButton.addEventListener('click', async () => {
+            transcribeButton.disabled = true;
+            transcriptionResult.textContent = '正在转换，请稍候...';
+
+            const formData = new FormData();
+            formData.append('audio_file', mp3Blob, 'output.mp3');
+
+            try {
+                const response = await fetch('http://tx.chenmin.org:9000/asr?encode=true&task=transcribe&language=zh&initial_prompt=%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A5%E4%BC%9A%E8%AE%AE%E5%BD%95%E9%9F%B3%EF%BC%8C%E4%B8%BB%E8%A6%81%E8%AF%AD%E8%A8%80%E4%B8%BA%E6%99%AE%E9%80%9A%E8%AF%9D&word_timestamps=false&output=srt', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                transcriptionResult.textContent = result.transcription || '转换失败，请重试。';
+            } catch (error) {
+                transcriptionResult.textContent = '转换错误，请重试。';
+            } finally {
+                transcribeButton.disabled = false;
             }
         });
     </script>
