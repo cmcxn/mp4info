@@ -3,17 +3,43 @@
 <head>
     <title>M4A 到 MP3 转换器</title>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
+    <style>
+        #progressBarContainer {
+            width: 100%;
+            background-color: #ddd;
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 30px;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <h1>M4A 到 MP3 转换器</h1>
     <input type="file" id="fileUploader" accept=".m4a" />
     <button id="convertButton">转换为 MP3</button>
     <br>
+    <div id="progressBarContainer">
+        <div id="progressBar">0%</div>
+    </div>
+    <br>
     <a id="downloadLink" style="display: none;">下载 MP3</a>
 
     <script>
         const { createFFmpeg, fetchFile } = FFmpeg;
-        const ffmpeg = createFFmpeg({ log: true });
+        const ffmpeg = createFFmpeg({
+            log: true,
+            progress: ({ ratio }) => {
+                const progressBar = document.getElementById('progressBar');
+                progressBar.style.width = `${(ratio * 100).toFixed(2)}%`;
+                progressBar.innerText = `${(ratio * 100).toFixed(2)}%`;
+            }
+        });
 
         const fileUploader = document.getElementById('fileUploader');
         const convertButton = document.getElementById('convertButton');
