@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video to MP3 Converter</title>
+    <!-- 注意这里使用了特定版本的ffmpeg.min.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
+</head>
+<body>
+    <input type="file" id="fileUploader" accept="video/*" />
+    <button id="convertBtn">Convert to MP3</button>
+    <script>
+        // 这里不再直接使用 FFmpeg，而是从 FFmpeg 中解构 createFFmpeg 和 fetchFile
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        const ffmpeg = createFFmpeg({ log: true });
+
+        document.getElementById('convertBtn').addEventListener('click', async () => {
+            const fileUploader = document.getElementById('fileUploader');
+            const files = fileUploader.files;
+            if (files.length === 0) {
+                alert("Please select a file.");
+                return;
+            }
+            const file = files[0];
+
+            if (!ffmpeg.isLoaded()) await ffmpeg.load();
+
+            ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+
+            await ffmpeg.run('-i', file.name, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', `${file.name}.mp3`);
+
+            const data = ffmpeg.FS('readFile', `${file.name}.mp3`);
+            const url = URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mp3' }));
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${file.name}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            ffmpeg.FS('unlink', file.name);
+            ffmpeg.FS('unlink', `${file.name}.mp3`);
+        });
+    </script>
+</body>
+</html>
