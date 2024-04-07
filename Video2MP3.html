@@ -3,15 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <title>Video to MP3 Converter</title>
-    <!-- 注意这里使用了特定版本的ffmpeg.min.js -->
+    <!-- 引入ffmpeg.min.js -->
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
+    <style>
+        /* 进度条样式 */
+        #progressContainer {
+            width: 100%;
+            background-color: #ddd;
+        }
+
+        #progressBar {
+            width: 1%;
+            height: 30px;
+            background-color: #4CAF50;
+            text-align: center;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <input type="file" id="fileUploader" accept="video/*" />
- <button id="convertBtn">Convert to MP3</button> 
+    <button id="convertBtn">提取音频为MP3</button>
+    <div id="progressContainer" style="display:none;">
+        <div id="progressBar">0%</div>
+    </div>
+    <button id="downloadBtn" style="display:none;">下载MP3</button>
+
 <script>
     const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: true });
+    const ffmpeg = createFFmpeg({ 
+        log: true,
+        progress: ({ ratio }) => {
+            // 更新进度条
+            const progress = Math.floor(ratio * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+        } 
+    });
 
     document.getElementById('convertBtn').addEventListener('click', async () => {
         const fileUploader = document.getElementById('fileUploader');
@@ -22,7 +51,9 @@
         }
         const file = files[0];
 
-        // 使用时间戳作为无中文的临时文件名
+        // 显示进度条容器
+        document.getElementById('progressContainer').style.display = 'block';
+
         const tempFileName = `temp_${Date.now()}`;
         const outputFileName = `${tempFileName}.mp3`;
 
@@ -35,17 +66,22 @@
         const data = ffmpeg.FS('readFile', outputFileName);
         const url = URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mp3' }));
 
-        const a = document.createElement('a');
-        a.href = url;
-        // 在这里使用原始文件名，但把扩展名改为.mp3
-        a.download = `${file.name.split('.')[0]}.mp3`;
-        document.body.appendChild(a);
-        a.click();
+        // 设置下载按钮
+        const downloadBtn = document.getElementById('downloadBtn');
+        downloadBtn.href = url;
+        downloadBtn.download = `${file.name.split('.')[0]}.mp3`;
+        downloadBtn.style.display = 'block'; // 显示下载按钮
+
+        downloadBtn.addEventListener('click', function() {
+            document.body.removeChild(downloadBtn); // 可选: 下载后移除按钮
+            URL.revokeObjectURL(url);
+            ffmpeg.FS('unlink', tempFileName);
+            ffmpeg.FS('unlink', outputFileName);
+        });
 
         // Cleanup
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        ffmpeg.FS('unlink', tempFileName);
-        ffmpeg.FS('unlink', outputFileName);
+        document.getElementById('progressContainer').style.display = 'none'; // 可选: 转换完成后隐藏进度条
     });
 </script>
+</body>
+</html>
