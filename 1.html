@@ -19,12 +19,12 @@
             color: white;
         }
 
-        #progressBarContainer {
+        #transcribeProgressBarContainer {
             width: 100%;
             background-color: #ddd;
         }
 
-        #progressBar {
+        #transcribeProgressBar {
             width: 0%;
             height: 30px;
             background-color: #4CAF50;
@@ -44,11 +44,10 @@
     <audio id="audioPlayer" controls style="display:none;"></audio> <!-- 添加音频播放器 -->
     <br>
     <h1>MP3 to SRT Transcription</h1>
-    <input type="file" id="mp3FileUploader" accept=".mp3" />
-    <button id="transcribeButton">Transcribe to SRT</button>
-    <br>
-    <div id="mp3ProgressBarContainer" style="display: none;">
-        <div id="mp3ProgressBar">0%</div>
+    <p>Transcribe the previously converted MP3 file to SRT subtitles.</p>
+    <button id="transcribeBtn">Transcribe to SRT</button>
+    <div id="transcribeProgressBarContainer" style="display: none;">
+        <div id="transcribeProgressBar">0%</div>
     </div>
     <br>
     <a id="downloadSRTLink" style="display: none;">Download SRT</a>
@@ -71,7 +70,7 @@
     const mp3Ffmpeg = createFFmpeg({
         log: true,
         progress: ({ ratio }) => {
-            const progressBar = document.getElementById('mp3ProgressBar');
+            const progressBar = document.getElementById('transcribeProgressBar');
             progressBar.style.width = `${(ratio * 100).toFixed(2)}%`;
             progressBar.innerText = `${(ratio * 100).toFixed(2)}%`;
         }
@@ -124,40 +123,35 @@
         document.getElementById('progressContainer').style.display = 'none'; // 转换完成后隐藏进度条
     });
 
-    document.getElementById('transcribeButton').addEventListener('click', async () => {
-        const mp3FileUploader = document.getElementById('mp3FileUploader');
-        const mp3File = mp3FileUploader.files[0];
-        if (mp3File) {
-            transcribeButton.disabled = true;
-            transcriptionResult.textContent = 'Transcribing, please wait...';
+    document.getElementById('transcribeBtn').addEventListener('click', async () => {
+        transcribeBtn.disabled = true;
+        transcriptionResult.textContent = 'Transcribing, please wait...';
 
-            if (!mp3Ffmpeg.isLoaded()) {
-                await mp3Ffmpeg.load();
-            }
+        if (!mp3Ffmpeg.isLoaded()) {
+            await mp3Ffmpeg.load();
+        }
 
-            mp3Ffmpeg.FS('writeFile', mp3File.name, await fetchFile(mp3File));
-            await mp3Ffmpeg.run('-i', mp3File.name, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', 'output.mp3');
-            const data = mp3Ffmpeg.FS('readFile', 'output.mp3');
-            const mp3Blob = new Blob([data.buffer], { type: 'audio/mpeg' });
+        const mp3FileName = document.getElementById('downloadBtn').download;
+        mp3Ffmpeg.FS('writeFile', mp3FileName, await fetchFile(mp3FileName));
+        await mp3Ffmpeg.run('-i', mp3FileName, '-ar', '44100', '-ac', '2', '-b:a', '192k', 'output.mp3');
+        const data = mp3Ffmpeg.FS('readFile', 'output.mp3');
+        const mp3Blob = new Blob([data.buffer], { type: 'audio/mpeg' });
 
-            const formData = new FormData();
-            formData.append('audio_file', mp3Blob, 'output.mp3');
+        const formData = new FormData();
+        formData.append('audio_file', mp3Blob, 'output.mp3');
 
-            try {
-                const response = await fetch('/asr?encode=true&task=transcribe&language=zh&initial_prompt=%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A5%E4%BC%9A%E8%AE%AE%E5%BD%95%E9%9F%B3%EF%BC%8C%E4%B8%BB%E8%A6%81%E8%AF%AD%E8%A8%80%E4%B8%BA%E6%99%AE%E9%80%9A%E8%AF%9D&word_timestamps=false&output=srt', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.text();
-                transcriptionResult.textContent = result || 'Transcription failed, please try again.';
-            } catch (error) {
-                transcriptionResult.textContent = 'Transcription error, please try again.';
-            } finally {
-                transcribeButton.disabled = false;
-            }
-        } else {
-            alert('Please upload an MP3 file first.');
+        try {
+            const response = await fetch('/asr?encode=true&task=transcribe&language=zh&initial_prompt=%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A5%E4%BC%9A%E8%AE%AE%E5%BD%95%E9%9F%B3%EF%BC%8C%E4%B8%BB%E8%A6%81%E8%AF%AD%E8%A8%80%E4%B8%BA%E6%99%AE%E9%80%9A%E8%AF%9D&word_timestamps=false&output=srt', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.text();
+            transcriptionResult.textContent = result || 'Transcription failed, please try again.';
+        } catch (error) {
+            transcriptionResult.textContent = 'Transcription error, please try again.';
+        } finally {
+            transcribeBtn.disabled = false;
         }
     });
 </script>
