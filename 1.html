@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Video to MP3 Converter with SRT Transcription</title>
+    <title>VideoSRT Transcription1</title>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
     <style>
         /* 进度条样式 */
@@ -19,12 +19,12 @@
             color: white;
         }
 
-        #transcribeProgressBarContainer {
+        #progressBarContainer {
             width: 100%;
             background-color: #ddd;
         }
 
-        #transcribeProgressBar {
+        #progressBar {
             width: 0%;
             height: 30px;
             background-color: #4CAF50;
@@ -44,10 +44,10 @@
     <audio id="audioPlayer" controls style="display:none;"></audio> <!-- 添加音频播放器 -->
     <br>
     <h1>MP3 to SRT Transcription</h1>
-    <p>Transcribe the previously converted MP3 file to SRT subtitles.</p>
-    <button id="transcribeBtn">Transcribe to SRT</button>
-    <div id="transcribeProgressBarContainer" style="display: none;">
-        <div id="transcribeProgressBar">0%</div>
+    <button id="transcribeButton">Transcribe to SRT</button>
+    <br>
+    <div id="mp3ProgressBarContainer" style="display: none;">
+        <div id="mp3ProgressBar">0%</div>
     </div>
     <br>
     <a id="downloadSRTLink" style="display: none;">Download SRT</a>
@@ -70,7 +70,7 @@
     const mp3Ffmpeg = createFFmpeg({
         log: true,
         progress: ({ ratio }) => {
-            const progressBar = document.getElementById('transcribeProgressBar');
+            const progressBar = document.getElementById('mp3ProgressBar');
             progressBar.style.width = `${(ratio * 100).toFixed(2)}%`;
             progressBar.innerText = `${(ratio * 100).toFixed(2)}%`;
         }
@@ -123,17 +123,24 @@
         document.getElementById('progressContainer').style.display = 'none'; // 转换完成后隐藏进度条
     });
 
-    document.getElementById('transcribeBtn').addEventListener('click', async () => {
-        transcribeBtn.disabled = true;
+    document.getElementById('transcribeButton').addEventListener('click', async () => {
+        const fileUploader = document.getElementById('fileUploader');
+        const files = fileUploader.files;
+        if (files.length === 0) {
+            alert("Please select a file.");
+            return;
+        }
+        const file = files[0];
+
+        transcribeButton.disabled = true;
         transcriptionResult.textContent = 'Transcribing, please wait...';
 
         if (!mp3Ffmpeg.isLoaded()) {
             await mp3Ffmpeg.load();
         }
 
-        const mp3FileName = document.getElementById('downloadBtn').download;
-        mp3Ffmpeg.FS('writeFile', mp3FileName, await fetchFile(mp3FileName));
-        await mp3Ffmpeg.run('-i', mp3FileName, '-ar', '44100', '-ac', '2', '-b:a', '192k', 'output.mp3');
+        mp3Ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+        await mp3Ffmpeg.run('-i', file.name, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', 'output.mp3');
         const data = mp3Ffmpeg.FS('readFile', 'output.mp3');
         const mp3Blob = new Blob([data.buffer], { type: 'audio/mpeg' });
 
@@ -148,10 +155,16 @@
             
             const result = await response.text();
             transcriptionResult.textContent = result || 'Transcription failed, please try again.';
+
+            // 显示下载SRT按钮
+            const downloadSRTLink = document.getElementById('downloadSRTLink');
+            downloadSRTLink.style.display = 'block';
+            downloadSRTLink.href = `data:text/plain;charset=utf-8,${encodeURIComponent(result)}`;
+            downloadSRTLink.download = `${file.name.split('.')[0]}.srt`;
         } catch (error) {
             transcriptionResult.textContent = 'Transcription error, please try again.';
         } finally {
-            transcribeBtn.disabled = false;
+            transcribeButton.disabled = false;
         }
     });
 </script>
