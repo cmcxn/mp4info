@@ -5,7 +5,7 @@
     <title>VideoSRT Transcription1</title>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
     <style>
-        /* ½ø¶ÈÌõÑùÊ½ */
+        /* è¿›åº¦æ¡æ ·å¼ */
         #progressContainer {
             width: 100%;
             background-color: #ddd;
@@ -41,9 +41,11 @@
         <div id="progressBar">0%</div>
     </div>
     <button id="downloadBtn" style="display:none;">Download MP3</button>
-    <audio id="audioPlayer" controls style="display:none;"></audio> <!-- Ìí¼ÓÒôÆµ²¥·ÅÆ÷ -->
+    <audio id="audioPlayer" controls style="display:none;"></audio> <!-- æ·»åŠ éŸ³é¢‘æ’­æ”¾å™¨ -->
     <br>
     <h1>MP3 to SRT Transcription</h1>
+
+    <select id="mp3language" class=""><option value="">--</option><option value="af">af</option><option value="am">am</option><option value="ar">ar</option><option value="as">as</option><option value="az">az</option><option value="ba">ba</option><option value="be">be</option><option value="bg">bg</option><option value="bn">bn</option><option value="bo">bo</option><option value="br">br</option><option value="bs">bs</option><option value="ca">ca</option><option value="cs">cs</option><option value="cy">cy</option><option value="da">da</option><option value="de">de</option><option value="el">el</option><option value="en">en</option><option value="es">es</option><option value="et">et</option><option value="eu">eu</option><option value="fa">fa</option><option value="fi">fi</option><option value="fo">fo</option><option value="fr">fr</option><option value="gl">gl</option><option value="gu">gu</option><option value="ha">ha</option><option value="haw">haw</option><option value="he">he</option><option value="hi">hi</option><option value="hr">hr</option><option value="ht">ht</option><option value="hu">hu</option><option value="hy">hy</option><option value="id">id</option><option value="is">is</option><option value="it">it</option><option value="ja">ja</option><option value="jw">jw</option><option value="ka">ka</option><option value="kk">kk</option><option value="km">km</option><option value="kn">kn</option><option value="ko">ko</option><option value="la">la</option><option value="lb">lb</option><option value="ln">ln</option><option value="lo">lo</option><option value="lt">lt</option><option value="lv">lv</option><option value="mg">mg</option><option value="mi">mi</option><option value="mk">mk</option><option value="ml">ml</option><option value="mn">mn</option><option value="mr">mr</option><option value="ms">ms</option><option value="mt">mt</option><option value="my">my</option><option value="ne">ne</option><option value="nl">nl</option><option value="nn">nn</option><option value="no">no</option><option value="oc">oc</option><option value="pa">pa</option><option value="pl">pl</option><option value="ps">ps</option><option value="pt">pt</option><option value="ro">ro</option><option value="ru">ru</option><option value="sa">sa</option><option value="sd">sd</option><option value="si">si</option><option value="sk">sk</option><option value="sl">sl</option><option value="sn">sn</option><option value="so">so</option><option value="sq">sq</option><option value="sr">sr</option><option value="su">su</option><option value="sv">sv</option><option value="sw">sw</option><option value="ta">ta</option><option value="te">te</option><option value="tg">tg</option><option value="th">th</option><option value="tk">tk</option><option value="tl">tl</option><option value="tr">tr</option><option value="tt">tt</option><option value="uk">uk</option><option value="ur">ur</option><option value="uz">uz</option><option value="vi">vi</option><option value="yi">yi</option><option value="yo">yo</option><option value="yue">yue</option><option value="zh">zh</option></select>
     <button id="transcribeButton">Transcribe to SRT</button>
     <br>
     <div id="mp3ProgressBarContainer" style="display: none;">
@@ -52,14 +54,14 @@
     <br>
     <a id="downloadSRTLink" style="display: none;">Download SRT</a>
     <br>
-    <p id="transcriptionResult"></p>
+    <textarea id="transcriptionResult"></textarea>
 
 <script>
     const { createFFmpeg, fetchFile } = FFmpeg;
     const ffmpeg = createFFmpeg({ 
         log: true,
         progress: ({ ratio }) => {
-            // ¸üĞÂ½ø¶ÈÌõ
+            // æ›´æ–°è¿›åº¦æ¡
             const progress = Math.floor(ratio * 100);
             const progressBar = document.getElementById('progressBar');
             progressBar.style.width = progress + '%';
@@ -85,7 +87,7 @@
         }
         const file = files[0];
 
-        // ÏÔÊ¾½ø¶ÈÌõÈİÆ÷
+        // æ˜¾ç¤ºè¿›åº¦æ¡å®¹å™¨
         document.getElementById('progressContainer').style.display = 'block';
 
         const tempFileName = `temp_${Date.now()}`;
@@ -102,9 +104,9 @@
 
         const url = URL.createObjectURL(mp3Blob);
 
-        // ÉèÖÃÏÂÔØ°´Å¥
+        // è®¾ç½®ä¸‹è½½æŒ‰é’®
         const downloadBtn = document.getElementById('downloadBtn');
-        downloadBtn.onclick = function() { // Ê¹ÓÃonclickÊÂ¼ş¼àÌı
+        downloadBtn.onclick = function() { // ä½¿ç”¨onclickäº‹ä»¶ç›‘å¬
             const a = document.createElement('a');
             a.href = url;
             a.download = `${file.name.split('.')[0]}.mp3`;
@@ -112,15 +114,15 @@
             a.click();
             document.body.removeChild(a);
         };
-        downloadBtn.style.display = 'block'; // ÏÔÊ¾ÏÂÔØ°´Å¥
+        downloadBtn.style.display = 'block'; // æ˜¾ç¤ºä¸‹è½½æŒ‰é’®
 
-        // ÉèÖÃÒôÆµ²¥·ÅÆ÷
+        // è®¾ç½®éŸ³é¢‘æ’­æ”¾å™¨
         const audioPlayer = document.getElementById('audioPlayer');
         audioPlayer.src = url;
-        audioPlayer.style.display = 'block'; // ÏÔÊ¾ÒôÆµ²¥·ÅÆ÷
+        audioPlayer.style.display = 'block'; // æ˜¾ç¤ºéŸ³é¢‘æ’­æ”¾å™¨
 
         // Cleanup
-        document.getElementById('progressContainer').style.display = 'none'; // ×ª»»Íê³ÉºóÒş²Ø½ø¶ÈÌõ
+        document.getElementById('progressContainer').style.display = 'none'; // è½¬æ¢å®Œæˆåéšè—è¿›åº¦æ¡
     });
 
     document.getElementById('transcribeButton').addEventListener('click', async () => {
@@ -146,9 +148,15 @@
 
         const formData = new FormData();
         formData.append('audio_file', mp3Blob, 'output.mp3');
+// è·å–<select>å…ƒç´ 
+        var selectElement = document.getElementById("mp3language");
+// è·å–é€‰ä¸­çš„å€¼
+        var selectedValue = selectElement.value;
+// æ‰“å°é€‰ä¸­çš„å€¼
+        console.log(selectedValue);
 
         try {
-            const response = await fetch('/asr?encode=true&task=transcribe&language=zh&initial_prompt=%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A5%E4%BC%9A%E8%AE%AE%E5%BD%95%E9%9F%B3%EF%BC%8C%E4%B8%BB%E8%A6%81%E8%AF%AD%E8%A8%80%E4%B8%BA%E6%99%AE%E9%80%9A%E8%AF%9D&word_timestamps=false&output=srt', {
+            const response = await fetch('/asr?encode=true&task=transcribe&language='+selectedValue+'&initial_prompt=%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A5%E4%BC%9A%E8%AE%AE%E5%BD%95%E9%9F%B3%EF%BC%8C%E4%B8%BB%E8%A6%81%E8%AF%AD%E8%A8%80%E4%B8%BA%E6%99%AE%E9%80%9A%E8%AF%9D&word_timestamps=false&output=srt', {
                 method: 'POST',
                 body: formData
             });
@@ -156,7 +164,7 @@
             const result = await response.text();
             transcriptionResult.textContent = result || 'Transcription failed, please try again.';
 
-            // ÏÔÊ¾ÏÂÔØSRT°´Å¥
+            // æ˜¾ç¤ºä¸‹è½½SRTæŒ‰é’®
             const downloadSRTLink = document.getElementById('downloadSRTLink');
             downloadSRTLink.style.display = 'block';
             downloadSRTLink.href = `data:text/plain;charset=utf-8,${encodeURIComponent(result)}`;
